@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -13,53 +14,6 @@ import (
 	"github.com/gocolly/colly/v2"
 )
 
-type Response struct {
-	Dal struct {
-		GetSunV3LocationSearchURLConfig struct {
-			LanguageEnUSLocationTypeLocaleQueryMiami struct {
-				StatusText string `json:"statusText"`
-				Data       struct {
-					Location struct {
-						Address           []string  `json:"address"`
-						AdminDistrict     []string  `json:"adminDistrict"`
-						AdminDistrictCode []any     `json:"adminDistrictCode"`
-						City              []string  `json:"city"`
-						Country           []string  `json:"country"`
-						CountryCode       []string  `json:"countryCode"`
-						DisplayName       []string  `json:"displayName"`
-						IanaTimeZone      []string  `json:"ianaTimeZone"`
-						Latitude          []float64 `json:"latitude"`
-						Locale            []struct {
-							Locale3 any    `json:"locale3"`
-							Locale4 any    `json:"locale4"`
-							Locale1 string `json:"locale1"`
-							Locale2 string `json:"locale2"`
-						} `json:"locale"`
-						Longitude            []float64 `json:"longitude"`
-						Neighborhood         []any     `json:"neighborhood"`
-						PlaceID              []string  `json:"placeId"`
-						PostalCode           []string  `json:"postalCode"`
-						PostalKey            []string  `json:"postalKey"`
-						DisputedArea         []bool    `json:"disputedArea"`
-						DisputedCountries    []any     `json:"disputedCountries"`
-						DisputedCountryCodes []any     `json:"disputedCountryCodes"`
-						DisputedCustomers    []any     `json:"disputedCustomers"`
-						DisputedShowCountry  [][]bool  `json:"disputedShowCountry"`
-						IataCode             []string  `json:"iataCode"`
-						IcaoCode             []string  `json:"icaoCode"`
-						LocID                []string  `json:"locId"`
-						LocationCategory     []any     `json:"locationCategory"`
-						PwsID                []string  `json:"pwsId"`
-						Type                 []string  `json:"type"`
-					} `json:"location"`
-				} `json:"data"`
-				Status  int  `json:"status"`
-				Loading bool `json:"loading"`
-				Loaded  bool `json:"loaded"`
-			} `json:"language:en-US;locationType:locale;query:miami"`
-		} `json:"getSunV3LocationSearchUrlConfig"`
-	} `json:"dal"`
-}
 type Hour struct {
 	Time         string
 	Temperature  string
@@ -107,92 +61,119 @@ func main() {
 	var hourly bool
 	var numOfHours int
 	var location string
+	var locationUrl string
 	flag.BoolVar(&hourly, "d", false, "Show hourly forecast")
 	flag.IntVar(&numOfHours, "t", 24, "Specify number of hours")
 	flag.StringVar(&location, "l", "none", "Location <City> <State>")
 	flag.Parse()
-	readSettings()
-	res := postLocation()
-	locationUrl := handleRes(res)
+	// readSettings()
+	if len(flag.Arg(0)) > 0 {
+		location = location + " " + flag.Arg(0)
+	}
+	fmt.Println(location)
+	// os.Exit(1)
+	//
+	if location != "none" {
+		locationUrl = postLocation(location)
+		// locationUrl = handleRes(res)
+	}
 	c.OnError(func(r *colly.Response, err error) {
 		fmt.Println("Request URL:", r.Request.URL, "failed with response:", "\nError:", err)
 	})
 
 	c.Wait()
+	if len(locationUrl) == 0 {
+		fmt.Println("No location")
+		return
+	}
 
 	if hourly {
-		hourlyForecast(c, numOfHours)
+		hourlyForecast(c, locationUrl, numOfHours)
 	} else {
 		currentWeather(c, locationUrl)
 	}
 }
 
-func readSettings() {
-	settingsDir := "~/.local/share/weather-thing"
+func writeSettings() {
+	settingsDir := "/home/lucas/.local/share/weather-thing/"
+	settingsFile := "data.json"
 	// cwd, err := os.Getwd()
+	fmt.Println(os.UserHomeDir())
 	// if err != nil {
-	// log.Fatal(err)
+	// 	log.Fatal(err)
 	// }
-	// fmt.Println(dirs)
-	os.ReadDir(settingsDir)
-	stat, err := os.Stat(settingsDir)
-	if err != nil {
-		fmt.Println(err)
+	if !doesPathExist(settingsDir) {
+		err := os.Mkdir(settingsDir, 0755)
+		if err != nil {
+			log.Println(err)
+		}
 	}
-	fmt.Println(stat)
+	if !doesPathExist(settingsDir + settingsFile) {
+		file, err := os.Create(settingsDir + settingsFile)
+		if err != nil {
+			log.Println(err)
+		}
+		defer file.Close()
+	}
 }
 
-func writeSettings() {
-	// settingsDir := "~/.local/share/weather-thing"
+func doesPathExist(path string) bool {
+	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+		log.Println(err)
+		return false
+	}
+	return true
+}
+
+func readSettings(path string) {
 }
 
 func isFileExists() {
 }
 
-func postLocation() *http.Response {
+func postLocation(query string) string {
 	posturl := "https://weather.com/api/v1/p/redux-dal"
 	bodyJson := []Body{
 		{
 			Name: "getSunV3LocationSearchUrlConfig",
 			Params: Params{
-				Query:        "miami",
+				Query:        query,
 				Language:     "en-US",
 				LocationType: "locale",
 			},
 		},
 	}
-	json_data, err := json.Marshal(bodyJson)
-	// fmt.Printf("Json: %s", json_data)
+	jsonData, err := json.Marshal(bodyJson)
+	// fmt.Printf("Json: %s", jsonData)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	resp, err := http.Post(posturl, "application/json",
-		bytes.NewBuffer(json_data))
+	response, err := http.Post(posturl, "application/json",
+		bytes.NewBuffer(jsonData))
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
+	defer response.Body.Close()
 
-	defer resp.Body.Close()
-
-	return resp
-}
-
-func handleRes(resp *http.Response) string { // returns URL for querried locatoin
-	var response Response
-
-	body, err := io.ReadAll(resp.Body)
+	var target map[string]interface{}
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		fmt.Println("JSON reading error")
 	}
-	err1 := json.Unmarshal(body, &response)
+	err1 := json.Unmarshal(body, &target)
 	if err1 != nil {
 		fmt.Println("Can not unmarshal JSON")
 	}
+	data := target["dal"].(map[string]interface{})["getSunV3LocationSearchUrlConfig"].(map[string]interface{})["language:en-US;locationType:locale;query:"+query].(map[string]interface{})["data"].(map[string]interface{})["location"]
+	placeId := data.(map[string]interface{})["placeId"].([]interface{})[0]
+	location := data.(map[string]interface{})["displayName"].([]interface{})[0]
 
-	placeId := response.Dal.GetSunV3LocationSearchURLConfig.LanguageEnUSLocationTypeLocaleQueryMiami.Data.Location.PlaceID[0]
 	fmt.Println(placeId)
-	return placeId
+	// fmt.Println(data)
+	fmt.Println(location)
+	id := fmt.Sprintf("%v", placeId)
+	return id
 }
 
 func getLocation(c *colly.Collector) string {
@@ -212,7 +193,7 @@ func getLocation(c *colly.Collector) string {
 	return locationUrl
 }
 
-func hourlyForecast(c *colly.Collector, numOfHours int) {
+func hourlyForecast(c *colly.Collector, locationUrl string, numOfHours int) {
 	hour := make([]Hour, 0)
 	c.OnHTML("div.HourlyForecast--DisclosureList--MQWP6", func(e *colly.HTMLElement) {
 		e.ForEach("details", func(i int, h *colly.HTMLElement) {
@@ -236,7 +217,7 @@ func hourlyForecast(c *colly.Collector, numOfHours int) {
 		printHours(hour, numOfHours)
 	})
 
-	c.Visit("https://weather.com/weather/hourbyhour/l/73a00f6a54fd626905dc1ae45c472c895a92da1e34591b680d45ec516f941349")
+	c.Visit("https://weather.com/weather/hourbyhour/l/" + locationUrl)
 }
 
 func printHours(hour []Hour, num int) {
