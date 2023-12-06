@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -36,6 +37,60 @@ type Body struct {
 	Name   string `json:"name"`
 	Params Params `json:"params"`
 }
+type Data struct {
+	Dal struct {
+		GetSunV3LocationSearchURLConfig struct {
+			LanguageEnUSLocationTypeLocaleQueryParis struct {
+				Loading bool `json:"loading"`
+				Loaded  bool `json:"loaded"`
+				Data    struct {
+					Location struct {
+						Address           []string  `json:"address"`
+						AdminDistrict     []any     `json:"adminDistrict"`
+						AdminDistrictCode []any     `json:"adminDistrictCode"`
+						City              []string  `json:"city"`
+						Country           []string  `json:"country"`
+						CountryCode       []string  `json:"countryCode"`
+						DisplayName       []string  `json:"displayName"`
+						IanaTimeZone      []string  `json:"ianaTimeZone"`
+						Latitude          []float64 `json:"latitude"`
+						Locale            []struct {
+							Locale1 any    `json:"locale1"`
+							Locale2 string `json:"locale2"`
+							Locale3 any    `json:"locale3"`
+							Locale4 any    `json:"locale4"`
+						} `json:"locale"`
+						Longitude            []float64 `json:"longitude"`
+						Neighborhood         []any     `json:"neighborhood"`
+						PlaceID              []string  `json:"placeId"`
+						PostalCode           []string  `json:"postalCode"`
+						PostalKey            []string  `json:"postalKey"`
+						DisputedArea         []bool    `json:"disputedArea"`
+						DisputedCountries    []any     `json:"disputedCountries"`
+						DisputedCountryCodes []any     `json:"disputedCountryCodes"`
+						DisputedCustomers    []any     `json:"disputedCustomers"`
+						DisputedShowCountry  [][]bool  `json:"disputedShowCountry"`
+						IataCode             []string  `json:"iataCode"`
+						IcaoCode             []string  `json:"icaoCode"`
+						LocID                []string  `json:"locId"`
+						LocationCategory     []any     `json:"locationCategory"`
+						PwsID                []string  `json:"pwsId"`
+						Type                 []string  `json:"type"`
+					} `json:"location"`
+				} `json:"data"`
+				Status     int    `json:"status"`
+				StatusText string `json:"statusText"`
+			} `json:"language:en-US;locationType:locale;query:"`
+		} `json:"getSunV3LocationSearchUrlConfig"`
+	} `json:"dal"`
+}
+type Location struct {
+	Location struct {
+		City    []string `json:"city"`
+		Country []string `json:"country"`
+		PlaceId []string `json:"placeId"`
+	} `json:"location"`
+}
 
 type Color string
 
@@ -56,13 +111,13 @@ func main() {
 	c := colly.NewCollector(
 		colly.AllowedDomains("weather.com"),
 		colly.MaxDepth(2),
-		colly.Async(),
+		// colly.Async(),
 	)
 	var hourly bool
-	var numOfHours int
+	numOfHours := 24
 	var location string
 	var locationUrl string
-	flag.BoolVar(&hourly, "d", false, "Show hourly forecast")
+	flag.BoolVar(&hourly, "h", false, "Show hourly forecast")
 	flag.IntVar(&numOfHours, "t", 24, "Specify number of hours")
 	flag.StringVar(&location, "l", "none", "Location <City> <State>")
 	flag.Parse()
@@ -70,7 +125,6 @@ func main() {
 	if len(flag.Arg(0)) > 0 {
 		location = location + " " + flag.Arg(0)
 	}
-	fmt.Println(location)
 	// os.Exit(1)
 	//
 	if location != "none" {
@@ -81,17 +135,80 @@ func main() {
 		fmt.Println("Request URL:", r.Request.URL, "failed with response:", "\nError:", err)
 	})
 
-	c.Wait()
+	// c.Wait()
 	if len(locationUrl) == 0 {
 		fmt.Println("No location")
 		return
 	}
-
+	// fmt.Printf("args %s", hourly)
 	if hourly {
 		hourlyForecast(c, locationUrl, numOfHours)
 	} else {
 		currentWeather(c, locationUrl)
 	}
+}
+// attempt at recursion solution for parsing out query in JSON key
+
+// func changeKey(data map[string]interface{}, query string, key string) map[string]interface{} {
+//     val := data[key].(map[string]interface{})
+//     if strings.ContainsAny(key, query) {
+//         fmt.Printf("key: %s val: %s\n", key, val) 
+//         strings.Split(key, ":"+query)
+//         return val
+//     } else {
+//         return changeKey(data, query, key)
+//     }
+//
+// }
+
+// func findKey(data map[string]interface{}, query string) map[string]interface{} {
+//     return changeKey(data, query, "dal")
+// }
+// func findKey(data map[string]interface{}, query string, mark string) map[string]interface{} {
+//     var cleanMap map[string]interface{}
+//     for k, v := range data {
+//         if strings.Contains(k, mark) {
+//             fmt.Println("key matches: ", k)
+//             split := strings.Split(k, mark)[0]
+//             k = split + query
+//         } else {
+//             return findKey(v.(map[string]interface{}), query, mark)
+//         }
+//     }
+//     return cleanMap
+// }
+
+func findKey(data map[string]interface{}, copy map[string]interface{}, query string) map[string]interface{} {
+    // var cleanMap map[string]interface{}
+    // term := "query:"
+    for k, v := range data {
+        if strings.Contains(k, query) {
+            fmt.Printf("key: '%s' search term: '%s'\n", k, query)
+            split := strings.Split(k, query)[0]
+            data[k] = split
+            // copy[k] = split
+            fmt.Println("Updated key: ", data[k])
+            // fmt.Printf("%s/end", data[k])
+        } else {
+            copy[k] = v
+            return findKey(v.(map[string]interface{}), copy, query)
+        }
+    }
+    // fmt.Println(cleanMap)
+    return nil
+}
+func changeJsonKey(data map[string]interface{}, query string) map[string]interface{}{
+    copy := make(map[string]interface{})
+    for k, v := range data {
+        copy[k] = v
+        fmt.Println(k, v)
+    }
+    findKey(data, copy, query)
+    // for k, _ := range data {
+    //     fmt.Println(data[k])
+    //     copy[k] = data[k]
+    // }
+    return copy
 }
 
 func writeSettings() {
@@ -155,25 +272,53 @@ func postLocation(query string) string {
 		panic(err)
 	}
 	defer response.Body.Close()
-
 	var target map[string]interface{}
+	location := Location{}
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		fmt.Println("JSON reading error")
 	}
-	err1 := json.Unmarshal(body, &target)
-	if err1 != nil {
+	err = json.Unmarshal(body, &location)
+	err = json.Unmarshal(body, &target)
+	if err != nil {
 		fmt.Println("Can not unmarshal JSON")
 	}
-	data := target["dal"].(map[string]interface{})["getSunV3LocationSearchUrlConfig"].(map[string]interface{})["language:en-US;locationType:locale;query:"+query].(map[string]interface{})["data"].(map[string]interface{})["location"]
-	placeId := data.(map[string]interface{})["placeId"].([]interface{})[0]
-	location := data.(map[string]interface{})["displayName"].([]interface{})[0]
+    // data := Data{}
+// for k, v := range target {
+//         fmt.Println(k, v)
+//     }
 
-	fmt.Println(placeId)
-	// fmt.Println(data)
-	fmt.Println(location)
-	id := fmt.Sprintf("%v", placeId)
-	return id
+    newMap := changeJsonKey(target, query)
+    for k, v := range newMap {
+        fmt.Println(k, v)
+    }
+    
+	// loc := target["dal"].(map[string]interface{})["getSunV3LocationSearchUrlConfig"].(map[string]interface{})["language:en-US;locationType:locale;query:"+query].(map[string]interface{})["data"].(map[string]interface{})["location"]
+	// placeId := loc.(map[string]interface{})["placeId"].([]interface{})[0]
+
+	// jsonbody, err := json.Marshal(loc)
+	// if err != nil {
+	// 	fmt.Println("JSON reading error" + err.Error())
+	// }
+	// location := Location{}
+	// err = json.Unmarshal(jsonbody, &location)
+	// if err != nil {
+	// 	fmt.Println("Can not unmarshal JSON" + err.Error())
+	// }
+	// fmt.Println(location.PlaceId[0])
+
+	// var location Location
+	// location.City = data.(map[string]interface{})["city"].([]interface{}).([]string)
+	// for i, j := range location.City {
+	// 	fmt.Println(i, j)
+	// 	fmt.Println(location.City[i])
+	// }
+	// / location := data.(map[string]interface{})["displayName"].([]interface{})[0]
+
+	// fmt.Println(placeId)
+	// id := fmt.Sprintf("%v", placeId)
+	// return id
+	return ""
 }
 
 func getLocation(c *colly.Collector) string {
@@ -216,8 +361,8 @@ func hourlyForecast(c *colly.Collector, locationUrl string, numOfHours int) {
 
 		printHours(hour, numOfHours)
 	})
-
-	c.Visit("https://weather.com/weather/hourbyhour/l/" + locationUrl)
+	hourlyUrl := "https://weather.com/weather/hourbyhour/l/" + locationUrl
+	c.Visit(hourlyUrl)
 }
 
 func printHours(hour []Hour, num int) {
