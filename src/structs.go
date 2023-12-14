@@ -3,7 +3,7 @@ type Hour struct {
     Time string
 	Temperature  string
 	PrecipChance string
-	Condition    string
+	Description    string
 	FeelsLike    string
 	Wind         string
 	Humidity     string
@@ -63,9 +63,16 @@ type Location struct {
 		PlaceId []string `json:"placeId"`
 	} `json:"location"`
 }
+
 type Weather struct {
+    Current Current
+    Today Today
+    Hourly []Hour
+}
+
+type Current struct {
     Time string
-    Conditions string
+    Description string
     FeelsLike string
     Temperature string
     Humidity string
@@ -75,17 +82,18 @@ type Weather struct {
     DewPoint string
     UvIndex string
     MoonPhase string
-    Forecast Forecast
 }
-type Today struct {
-    PrecipPropability string
+
+type TimeOfDay struct {
     Temperature string
+    PrecipProb string 
 }
-type Forecast struct {
-    Morning Today
-    Afternoon Today
-    Evening Today
-    Overnight Today
+
+type Today struct {
+    Morning TimeOfDay
+    Afternoon TimeOfDay
+    Evening TimeOfDay
+    Overnight TimeOfDay
 }
 
 type Color string
