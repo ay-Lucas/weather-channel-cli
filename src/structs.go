@@ -1,9 +1,10 @@
 package main
+
 type Hour struct {
-    Time string
+	Time         string
 	Temperature  string
 	PrecipChance string
-	Description    string
+	Description  string
 	FeelsLike    string
 	Wind         string
 	Humidity     string
@@ -22,39 +23,39 @@ type Body struct {
 	Params Params `json:"params"`
 }
 type Data struct {
-    Location struct {
-        Address           []string  `json:"address"`
-        AdminDistrict     []any     `json:"adminDistrict"`
-        AdminDistrictCode []any     `json:"adminDistrictCode"`
-        City              []string  `json:"city"`
-        Country           []string  `json:"country"`
-        CountryCode       []string  `json:"countryCode"`
-        DisplayName       []string  `json:"displayName"`
-        IanaTimeZone      []string  `json:"ianaTimeZone"`
-        Latitude          []float64 `json:"latitude"`
-        Locale            []struct {
-            Locale1 any    `json:"locale1"`
-            Locale2 string `json:"locale2"`
-            Locale3 any    `json:"locale3"`
-            Locale4 any    `json:"locale4"`
-        } `json:"locale"`
-        Longitude            []float64 `json:"longitude"`
-        Neighborhood         []any     `json:"neighborhood"`
-        PlaceID              []string  `json:"placeId"`
-        PostalCode           []string  `json:"postalCode"`
-        PostalKey            []string  `json:"postalKey"`
-        DisputedArea         []bool    `json:"disputedArea"`
-        DisputedCountries    []any     `json:"disputedCountries"`
-        DisputedCountryCodes []any     `json:"disputedCountryCodes"`
-        DisputedCustomers    []any     `json:"disputedCustomers"`
-        DisputedShowCountry  [][]bool  `json:"disputedShowCountry"`
-        IataCode             []string  `json:"iataCode"`
-        IcaoCode             []string  `json:"icaoCode"`
-        LocID                []string  `json:"locId"`
-        LocationCategory     []any     `json:"locationCategory"`
-        PwsID                []string  `json:"pwsId"`
-        Type                 []string  `json:"type"`
-    } `json:"location"`
+	Location struct {
+		Address           []string  `json:"address"`
+		AdminDistrict     []any     `json:"adminDistrict"`
+		AdminDistrictCode []any     `json:"adminDistrictCode"`
+		City              []string  `json:"city"`
+		Country           []string  `json:"country"`
+		CountryCode       []string  `json:"countryCode"`
+		DisplayName       []string  `json:"displayName"`
+		IanaTimeZone      []string  `json:"ianaTimeZone"`
+		Latitude          []float64 `json:"latitude"`
+		Locale            []struct {
+			Locale1 any    `json:"locale1"`
+			Locale2 string `json:"locale2"`
+			Locale3 any    `json:"locale3"`
+			Locale4 any    `json:"locale4"`
+		} `json:"locale"`
+		Longitude            []float64 `json:"longitude"`
+		Neighborhood         []any     `json:"neighborhood"`
+		PlaceID              []string  `json:"placeId"`
+		PostalCode           []string  `json:"postalCode"`
+		PostalKey            []string  `json:"postalKey"`
+		DisputedArea         []bool    `json:"disputedArea"`
+		DisputedCountries    []any     `json:"disputedCountries"`
+		DisputedCountryCodes []any     `json:"disputedCountryCodes"`
+		DisputedCustomers    []any     `json:"disputedCustomers"`
+		DisputedShowCountry  [][]bool  `json:"disputedShowCountry"`
+		IataCode             []string  `json:"iataCode"`
+		IcaoCode             []string  `json:"icaoCode"`
+		LocID                []string  `json:"locId"`
+		LocationCategory     []any     `json:"locationCategory"`
+		PwsID                []string  `json:"pwsId"`
+		Type                 []string  `json:"type"`
+	} `json:"location"`
 }
 type Location struct {
 	Location struct {
@@ -65,35 +66,35 @@ type Location struct {
 }
 
 type Weather struct {
-    Current Current
-    Today Today
-    Hourly []Hour
+	Current Current
+	Today   Today
+	Hourly  []Hour
 }
 
 type Current struct {
-    Time string
-    Description string
-    FeelsLike string
-    Temperature string
-    Humidity string
-    Pressure string
-    Visibility string
-    WindSpeed string
-    DewPoint string
-    UvIndex string
-    MoonPhase string
+	Time        string
+	Description string
+	FeelsLike   string
+	Temperature string
+	Humidity    string
+	Pressure    string
+	Visibility  string
+	WindSpeed   string
+	DewPoint    string
+	UvIndex     string
+	MoonPhase   string
 }
 
 type TimeOfDay struct {
-    Temperature string
-    PrecipProb string 
+	Temperature string
+	PrecipProb  string
 }
 
 type Today struct {
-    Morning TimeOfDay
-    Afternoon TimeOfDay
-    Evening TimeOfDay
-    Overnight TimeOfDay
+	Morning   TimeOfDay
+	Afternoon TimeOfDay
+	Evening   TimeOfDay
+	Overnight TimeOfDay
 }
 
 type Color string
@@ -106,4 +107,3 @@ const (
 	Blue   Color = "\u001b[34m"
 	Reset  Color = "\u001b[0m"
 )
-
