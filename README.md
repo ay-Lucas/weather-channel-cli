@@ -8,10 +8,10 @@ A command-line application built in Go to fetch and display real-time weather fo
 
 ## Features
 
-- Retrieve current, hourly, and daily weather forecasts for any location.
-- Customizable forecast options with flexible parameters.
-- Clean, colorized output for easy readability.
-- Combines API data and web scraping for accurate results.
+- Retrieve current, hourly, and daily weather forecasts for any location
+- Customizable forecast options
+- Clean, colorized output
+- Planned support for saving user preferences in a configuration file
 
 ---
 
@@ -49,14 +49,14 @@ Run the CLI tool with the following options:
 
 ### Flags
 
-| Flag            | Description                                                               | Default Value |
-| --------------- | ------------------------------------------------------------------------- | ------------- |
-| `-l <location>` | Specify the location (e.g., "New York, NY"). **Required**.                | N/A           |
-| `-hourly`       | Display the hourly weather forecast.                                      | `false`       |
-| `-d`            | Display the daily weather forecast.                                       | `false`       |
-| `-t <hours>`    | Specify the number of hours for the hourly forecast.                      | `24`          |
-| `-a`            | List all available weather details (current, today, and hourly combined). | `false`       |
-| `-temperature`  | Print only the current temperature.                                       | `false`       |
+| Flag                          | Description                                                               | Default Value |
+| ----------------------------- | ------------------------------------------------------------------------- | ------------- |
+| `-l <city> <state> <country>` | Specify the location (e.g., "New York NY US"). **Required**.              | nil nil US    |
+| `-hourly`                     | Display the hourly weather forecast.                                      | `false`       |
+| `-d`                          | Display the daily weather forecast.                                       | `false`       |
+| `-t <hours>`                  | Specify the number of hours for the hourly forecast.                      | `24`          |
+| `-a`                          | List all available weather details (current, today, and hourly combined). | `false`       |
+| `-temperature`                | Print only the current temperature.                                       | `false`       |
 
 ### Examples
 
@@ -65,7 +65,7 @@ Run the CLI tool with the following options:
 Retrieve the current weather for a specific location:
 
 ```bash
-./weather-cli -l "Los Angeles, CA"
+./weather-cli -l Los Angeles, CA
 ```
 
 #### Hourly Weather
@@ -73,7 +73,7 @@ Retrieve the current weather for a specific location:
 Display the hourly weather forecast for the next 12 hours:
 
 ```bash
-./weather-cli -l "Los Angeles, CA" -hourly -t 12
+./weather-cli -l Los Angeles, CA -hourly -t 12
 ```
 
 #### Daily Forecast
@@ -81,7 +81,7 @@ Display the hourly weather forecast for the next 12 hours:
 Show the daily weather forecast:
 
 ```bash
-./weather-cli -l "Los Angeles, CA" -d
+./weather-cli -l Los Angeles, CA -d
 ```
 
 #### Full Weather Report
@@ -89,7 +89,7 @@ Show the daily weather forecast:
 Get all details (current, today’s breakdown, and hourly forecast):
 
 ```bash
-./weather-cli -l "Los Angeles, CA" -a
+./weather-cli -l Los Angeles, CA -a
 ```
 
 ---
